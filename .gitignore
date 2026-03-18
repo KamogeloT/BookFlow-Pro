@@ -1,0 +1,8 @@
+# Repo-wide ignores (subprojects can still have their own .gitignore files)
+
+# Frontend env (contains keys / secrets)
+web/.env
+
+# One-off secret export used for local DB setup (do not commit)
+Documentation/DBpass.txt
+

@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+:root {
+  /* macOS-like theme tokens */
+  --text: #6e6e73;
+  --text-h: #1c1c1e;
+  --bg: #f5f5f7;
+  --border: #d2d2d7;
+  --code-bg: #f0f0f2;
+  --accent: #0a84ff;
+  --accent-bg: rgba(10, 132, 255, 0.12);
+  --accent-border: rgba(10, 132, 255, 0.35);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  /* macOS-like surfaces/shadows */
+  --surface: rgba(245, 245, 247, 0.72);
+  --surface-strong: rgba(245, 245, 247, 0.88);
+  --shadow-surface: 0 10px 25px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-button: 0 10px 22px rgba(10, 132, 255, 0.22), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --blur: 14px;
+  --shadow:
+    rgba(0, 0, 0, 0.12) 0 10px 15px -3px, rgba(0, 0, 0, 0.04) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #8e8e93;
+    --text-h: #f5f5f7;
+    --bg: #000000;
+    --border: #2c2c2e;
+    --code-bg: #1c1c1e;
+    --accent: #0a84ff;
+    --accent-bg: rgba(10, 132, 255, 0.18);
+    --accent-border: rgba(10, 132, 255, 0.5);
+    --social-bg: rgba(255, 255, 255, 0.08);
+    --surface: rgba(0, 0, 0, 0.42);
+    --surface-strong: rgba(28, 28, 30, 0.72);
+    --shadow-surface: 0 14px 32px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-button: 0 14px 28px rgba(10, 132, 255, 0.25), 0 2px 8px rgba(0, 0, 0, 0.25);
+    --blur: 16px;
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  text-align: center;
+  border-inline: none;
+  background: transparent;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image:
+    radial-gradient(900px 420px at 15% 0%, rgba(10, 132, 255, 0.18), transparent 60%),
+    radial-gradient(700px 360px at 85% 10%, rgba(0, 0, 0, 0.06), transparent 55%);
+}
+
+/* Global macOS-like depth:
+   - apply frosted surfaces to the app frame and bordered panels
+   - subtle shadows/blur to reduce “flat” appearance */
+header,
+footer,
+section,
+.rounded-xl.border,
+.rounded-lg.border {
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow-surface);
+}
+
+/* Slight elevation + polish for primary action buttons */
+.bg-purple-600 {
+  box-shadow: var(--shadow-button);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+
+.bg-purple-600:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
