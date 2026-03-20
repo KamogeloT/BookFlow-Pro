@@ -2,10 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 type Booking = {
-  id: string
+  booking_id: string
   booking_reference: string | null
   scheduled_start: string
   scheduled_end: string
+  notes?: string | null
+  status_name?: string | null
+  customer_name?: string | null
+  customer_email?: string | null
+  service_name?: string | null
 }
 
 type ViewMode = 'month' | 'week' | 'day'
@@ -69,8 +74,14 @@ export function CalendarExperiencePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [monthBookings, setMonthBookings] = useState<Booking[]>([])
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
+  const [selectedBookingDetail, setSelectedBookingDetail] = useState<Booking | null>(null)
+  const [notice, setNotice] = useState<{ kind: 'success' | 'error' | 'info'; message: string } | null>(
+    null
+  )
 
   // Keep cursor date inside the current month anchor.
   useEffect(() => {
@@ -93,12 +104,11 @@ export function CalendarExperiencePage() {
       try {
         const start = monthStart(monthAnchor)
         const end = monthAdd(start, 1)
-        const { data, error: qErr } = await supabase
-          .from('bookings')
-          .select('id,booking_reference,scheduled_start,scheduled_end')
-          .gte('scheduled_start', start.toISOString())
-          .lt('scheduled_start', end.toISOString())
-          .order('scheduled_start', { ascending: true })
+        const { data, error: qErr } = await supabase.rpc('list_bookings_in_range', {
+          p_start: start.toISOString(),
+          p_end: end.toISOString(),
+          p_status: statusFilter === 'All' ? null : statusFilter,
+        })
 
         if (qErr) throw qErr
         if (cancelled) return
@@ -106,6 +116,7 @@ export function CalendarExperiencePage() {
       } catch (e) {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Failed to load bookings')
+        setNotice({ kind: 'error', message: 'Failed to refresh calendar bookings.' })
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -115,11 +126,44 @@ export function CalendarExperiencePage() {
     return () => {
       cancelled = true
     }
-  }, [monthKey, monthAnchor])
+  }, [monthKey, monthAnchor, statusFilter])
+
+  useEffect(() => {
+    if (!selectedBookingId) {
+      setSelectedBookingDetail(null)
+      return
+    }
+    let cancelled = false
+    async function loadDetail() {
+      try {
+        const { data, error } = await supabase.rpc('get_booking_detail', {
+          p_booking_id: selectedBookingId,
+        })
+        if (error) throw error
+        if (cancelled) return
+        setSelectedBookingDetail(((data ?? [])[0] ?? null) as Booking | null)
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load booking detail')
+        if (!cancelled) setNotice({ kind: 'error', message: 'Failed to load appointment detail.' })
+      }
+    }
+    loadDetail().catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [selectedBookingId])
 
   const bookingsByDay = useMemo(() => {
     const map = new Map<string, Booking[]>()
-    for (const b of monthBookings) {
+    const filtered = monthBookings.filter((b) => {
+      const q = searchTerm.trim().toLowerCase()
+      if (!q) return true
+      return [b.booking_reference ?? '', b.customer_name ?? '', b.customer_email ?? '', b.service_name ?? '']
+        .join(' ')
+        .toLowerCase()
+        .includes(q)
+    })
+    for (const b of filtered) {
       const k = dateKeyLocal(new Date(b.scheduled_start))
       const list = map.get(k) ?? []
       list.push(b)
@@ -134,7 +178,7 @@ export function CalendarExperiencePage() {
       map.set(k, list)
     }
     return map
-  }, [monthBookings])
+  }, [monthBookings, searchTerm])
 
   const cursorDayKey = dateKeyLocal(cursorDate)
 
@@ -142,7 +186,7 @@ export function CalendarExperiencePage() {
 
   const selectedBooking = useMemo(() => {
     if (!selectedBookingId) return null
-    return monthBookings.find((b) => b.id === selectedBookingId) ?? null
+    return monthBookings.find((b) => b.booking_id === selectedBookingId) ?? null
   }, [selectedBookingId, monthBookings])
 
   const year = monthAnchor.getFullYear()
@@ -189,6 +233,33 @@ export function CalendarExperiencePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => {
+              setNotice({ kind: 'info', message: 'Refreshing calendar...' })
+              const ms = monthStart(cursorDate)
+              setMonthAnchor(new Date(ms))
+            }}
+            className="rounded-lg border border-gray-200/70 dark:border-gray-800/70 px-3 py-2 text-sm hover:opacity-90"
+          >
+            Refresh
+          </button>
+          <input
+            className="rounded-lg border border-gray-200/70 dark:border-gray-800/70 bg-transparent px-3 py-2 text-sm"
+            placeholder="Search ref/customer/service"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <select
+            className="rounded-lg border border-gray-200/70 dark:border-gray-800/70 bg-transparent px-3 py-2 text-sm"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option>All</option>
+            <option>Pending</option>
+            <option>Confirmed</option>
+            <option>Cancelled</option>
+          </select>
+          <button
+            type="button"
             onClick={() => setViewMode('month')}
             className={[
               'rounded-lg border px-3 py-1 text-sm',
@@ -221,6 +292,20 @@ export function CalendarExperiencePage() {
       </div>
 
       {/* Month selector + navigation */}
+      {notice ? (
+        <div
+          className={[
+            'mb-4 rounded-lg border p-3 text-sm shadow-sm',
+            notice.kind === 'success'
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : notice.kind === 'error'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-blue-200 bg-blue-50 text-blue-700',
+          ].join(' ')}
+        >
+          {notice.message}
+        </div>
+      ) : null}
       <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-5">
         <div className="flex items-center gap-3">
           <button
@@ -285,11 +370,30 @@ export function CalendarExperiencePage() {
 
       {/* Main view */}
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm mb-4">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm mb-4 flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => {
+              const ms = monthStart(cursorDate)
+              setMonthAnchor(new Date(ms))
+            }}
+            className="rounded-lg border border-red-200 bg-white/70 px-3 py-1 text-xs hover:opacity-90"
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
 
       {viewMode === 'month' ? (
         <div className="rounded-xl border border-gray-200/70 dark:border-gray-800/70 p-4 bg-white/50 dark:bg-[#1c1c1e]/25 backdrop-blur shadow-sm">
+          {loading ? (
+            <div className="grid grid-cols-7 gap-1 mb-3">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="h-4 rounded bg-black/5 dark:bg-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : null}
           <div className="grid grid-cols-7 gap-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
               <div key={d} className="text-center">
@@ -333,7 +437,7 @@ export function CalendarExperiencePage() {
                   {dayBookings.length > 0 ? (
                     <div className="space-y-1">
                       {dayBookings.slice(0, 3).map((b) => (
-                        <div key={b.id} className="text-[11px] text-gray-700 dark:text-gray-200 truncate">
+                        <div key={b.booking_id} className="text-[11px] text-gray-700 dark:text-gray-200 truncate">
                           {fmtTime(new Date(b.scheduled_start))} {b.booking_reference ? b.booking_reference : ''}
                         </div>
                       ))}
@@ -400,11 +504,11 @@ export function CalendarExperiencePage() {
                       <div className="space-y-1">
                         {dayBookings.map((b) => (
                           <button
-                            key={b.id}
+                            key={b.booking_id}
                             type="button"
                             onClick={() => {
                               setCursorDate(new Date(d))
-                              setSelectedBookingId(b.id)
+                              setSelectedBookingId(b.booking_id)
                               setViewMode('day')
                             }}
                             className="w-full text-left rounded-md px-2 py-1 hover:bg-black/5 dark:hover:bg-white/5"
@@ -438,10 +542,10 @@ export function CalendarExperiencePage() {
               <div className="space-y-2">
                 {cursorDayBookings.slice(0, 10).map((b) => (
                   <button
-                    key={b.id}
+                            key={b.booking_id}
                     type="button"
                     onClick={() => {
-                      setSelectedBookingId(b.id)
+                              setSelectedBookingId(b.booking_id)
                       setViewMode('day')
                     }}
                     className="w-full text-left rounded-md border border-gray-200/70 dark:border-gray-800/70 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5"
@@ -495,12 +599,12 @@ export function CalendarExperiencePage() {
             ) : (
               <div className="space-y-2">
                 {cursorDayBookings.map((b) => {
-                  const isSelected = b.id === selectedBookingId
+                  const isSelected = b.booking_id === selectedBookingId
                   return (
                     <button
-                      key={b.id}
+                      key={b.booking_id}
                       type="button"
-                      onClick={() => setSelectedBookingId(b.id)}
+                      onClick={() => setSelectedBookingId(b.booking_id)}
                       className={[
                         'w-full text-left rounded-xl border px-3 py-3 transition',
                         isSelected
@@ -533,15 +637,35 @@ export function CalendarExperiencePage() {
               <div className="space-y-3">
                 <div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Reference</div>
-                  <div className="text-sm font-semibold font-mono">
-                    {selectedBooking.booking_reference ?? '(no reference)'}
-                  </div>
+                  <div className="text-sm font-semibold font-mono">{selectedBooking.booking_reference ?? '(no reference)'}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">When</div>
                   <div className="text-sm">
                     {fmtDateTime(selectedBooking.scheduled_start)} - {fmtTime(new Date(selectedBooking.scheduled_end))}
                   </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Status</div>
+                  <div className="text-sm">{selectedBookingDetail?.status_name ?? selectedBooking.status_name ?? '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Customer</div>
+                  <div className="text-sm">
+                    {selectedBookingDetail?.customer_name ??
+                      selectedBookingDetail?.customer_email ??
+                      selectedBooking.customer_name ??
+                      selectedBooking.customer_email ??
+                      '-'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Service</div>
+                  <div className="text-sm">{selectedBookingDetail?.service_name ?? selectedBooking.service_name ?? '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Notes</div>
+                  <div className="text-sm whitespace-pre-wrap">{selectedBookingDetail?.notes ?? selectedBooking.notes ?? '-'}</div>
                 </div>
               </div>
             ) : (
@@ -577,10 +701,10 @@ export function CalendarExperiencePage() {
             <div className="space-y-2">
               {cursorDayBookings.slice(0, 8).map((b) => (
                 <button
-                  key={b.id}
+                  key={b.booking_id}
                   type="button"
                   onClick={() => {
-                    setSelectedBookingId(b.id)
+                    setSelectedBookingId(b.booking_id)
                     setViewMode('day')
                   }}
                   className="w-full text-left rounded-lg border border-gray-200/70 dark:border-gray-800/70 p-3 hover:bg-black/5 dark:hover:bg-white/5"

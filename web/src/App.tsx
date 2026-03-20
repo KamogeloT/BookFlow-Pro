@@ -5,18 +5,29 @@ import { CustomerBookingPage } from './pages/CustomerBookingPage'
 import { CalendarExperiencePage } from './pages/CalendarExperiencePage'
 import { AdminResourcesPage } from './pages/AdminResourcesPage'
 import { ProLayout } from './layouts/ProLayout'
+import { AllocationPage } from './pages/AllocationPage'
+import { NotificationsPage } from './pages/NotificationsPage'
+import { ReportsPage } from './pages/ReportsPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { OpsDashboardPage } from './pages/OpsDashboardPage'
+import { StaffDashboardPage } from './pages/StaffDashboardPage'
+import { CustomerDashboardPage } from './pages/CustomerDashboardPage'
+import { BrandingSettingsPage } from './pages/BrandingSettingsPage'
+import { TenantsSettingsPage } from './pages/TenantsSettingsPage'
+import { RolesSettingsPage } from './pages/RolesSettingsPage'
+import { ServicesSettingsPage } from './pages/ServicesSettingsPage'
+import { ResourceManagementSettingsPage } from './pages/ResourceManagementSettingsPage'
+import { AllocationRulesSettingsPage } from './pages/AllocationRulesSettingsPage'
+import { NotificationTemplatesSettingsPage } from './pages/NotificationTemplatesSettingsPage'
+import { WebhooksSettingsPage } from './pages/WebhooksSettingsPage'
+import { AppSettingsPage } from './pages/AppSettingsPage'
+import { AuditLogsSettingsPage } from './pages/AuditLogsSettingsPage'
+import { WaitlistsPage } from './pages/WaitlistsPage'
+import { QrCheckinPage } from './pages/QrCheckinPage'
+import { PromotionsPage } from './pages/PromotionsPage'
+import { FeedbackPage } from './pages/FeedbackPage'
+import { ApiIntegrationsPage } from './pages/ApiIntegrationsPage'
 import './App.css'
-
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-2">{title}</h1>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Placeholder page. Business rules will be implemented later.
-      </p>
-    </div>
-  )
-}
 
 export default function App() {
   return (
@@ -42,46 +53,37 @@ export default function App() {
           <Route path="bookings" element={<CustomerBookingPage />} />
           <Route path="calendar" element={<CalendarExperiencePage />} />
           <Route path="resources" element={<AdminResourcesPage />} />
-          <Route path="allocation" element={<ComingSoon title="Allocation Engine" />} />
-          <Route path="notifications" element={<ComingSoon title="Notifications" />} />
-          <Route path="reports" element={<ComingSoon title="Reports" />} />
+          <Route path="allocation" element={<AllocationPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
 
           {/* Dashboards (left sidebar) */}
-          <Route path="dashboards/admin" element={<ComingSoon title="Admin Dashboard" />} />
-          <Route path="dashboards/ops" element={<ComingSoon title="Operations Dashboard" />} />
-          <Route path="dashboards/staff" element={<ComingSoon title="Staff Dashboard" />} />
-          <Route
-            path="dashboards/customer"
-            element={<ComingSoon title="Customer Dashboard" />}
-          />
+          <Route path="dashboards/admin" element={<AdminDashboardPage />} />
+          <Route path="dashboards/ops" element={<OpsDashboardPage />} />
+          <Route path="dashboards/staff" element={<StaffDashboardPage />} />
+          <Route path="dashboards/customer" element={<CustomerDashboardPage />} />
 
           {/* Settings (left sidebar) */}
-          <Route path="settings/branding" element={<ComingSoon title="Branding & Themes" />} />
-          <Route path="settings/tenants" element={<ComingSoon title="Tenants" />} />
-          <Route path="settings/roles" element={<ComingSoon title="Roles & Permissions" />} />
-          <Route path="settings/services" element={<ComingSoon title="Services & Sub-services" />} />
-          <Route path="settings/resources" element={<ComingSoon title="Resource Management" />} />
-          <Route
-            path="settings/allocation-rules"
-            element={<ComingSoon title="Allocation Rules" />}
-          />
+          <Route path="settings/branding" element={<BrandingSettingsPage />} />
+          <Route path="settings/tenants" element={<TenantsSettingsPage />} />
+          <Route path="settings/roles" element={<RolesSettingsPage />} />
+          <Route path="settings/services" element={<ServicesSettingsPage />} />
+          <Route path="settings/resources" element={<ResourceManagementSettingsPage />} />
+          <Route path="settings/allocation-rules" element={<AllocationRulesSettingsPage />} />
           <Route
             path="settings/notifications"
-            element={<ComingSoon title="Notification Templates" />}
+            element={<NotificationTemplatesSettingsPage />}
           />
-          <Route path="settings/webhooks" element={<ComingSoon title="Webhooks" />} />
-          <Route path="settings/app-settings" element={<ComingSoon title="App Settings" />} />
-          <Route path="settings/audit-logs" element={<ComingSoon title="Audit Logs" />} />
+          <Route path="settings/webhooks" element={<WebhooksSettingsPage />} />
+          <Route path="settings/app-settings" element={<AppSettingsPage />} />
+          <Route path="settings/audit-logs" element={<AuditLogsSettingsPage />} />
 
           {/* Extras (left sidebar) */}
-          <Route path="extras/waitlist" element={<ComingSoon title="Waitlists" />} />
-          <Route path="extras/qr-checkin" element={<ComingSoon title="QR Check-in" />} />
-          <Route path="extras/promotions" element={<ComingSoon title="Promotions" />} />
-          <Route path="extras/feedback" element={<ComingSoon title="Feedback" />} />
-          <Route
-            path="extras/api-integrations"
-            element={<ComingSoon title="API Integrations" />}
-          />
+          <Route path="extras/waitlist" element={<WaitlistsPage />} />
+          <Route path="extras/qr-checkin" element={<QrCheckinPage />} />
+          <Route path="extras/promotions" element={<PromotionsPage />} />
+          <Route path="extras/feedback" element={<FeedbackPage />} />
+          <Route path="extras/api-integrations" element={<ApiIntegrationsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

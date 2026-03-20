@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { AppBackButton } from '../components/AppBackButton'
 import { BrandLogo } from '../components/BrandLogo'
 
 export function LoginPage() {
@@ -30,7 +31,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 flex items-center justify-center">
+    <div className="min-h-screen p-6 flex items-center justify-center relative">
+      <div className="absolute top-4 left-4 z-10">
+        <AppBackButton />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/80 dark:bg-[#1c1c1e]/60 backdrop-blur shadow-sm p-6">
         <div className="flex items-center justify-center mb-6">
           <BrandLogo alt="Logo" className="max-w-full h-auto max-h-28 object-contain" />
